@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenido a Zen</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
+        }
+        h1 {
+            color: #6a0572;
+            margin-bottom: 15px;
+            font-size: 2.2em;
+            letter-spacing: -0.5px;
+        }
+        p {
+            color: #555;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            font-size: 1.1em;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+            font-weight: 600;
+        }
+        input[type="text"],
+        input[type="number"],
+        input[type="email"],
+        select {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1em;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            color: #333;
+            background-color: #f9f9f9;
+        }
+        input:focus,
+        select:focus {
+            border-color: #926fb1;
+            box-shadow: 0 0 0 3px rgba(146, 111, 177, 0.2);
+            outline: none;
+        }
+        button {
+            background-color: #a786d7;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 15px rgba(167, 134, 215, 0.4);
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #926fb1;
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 10px rgba(167, 134, 215, 0.4);
+        }
+    </style>
+
+    <!-- OneSignal cargado pero TOTALMENTE SILENCIOSO en esta página -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "c949ea47-5c1a-4791-a643-31a83001325b",
+          safari_web_id: "web.onesignal.auto.40f3c042-9d52-4eaf-84f1-85ef29137faa",
+          notifyButton: { enable: false },     // ← sin botón azul
+          autoResubscribe: true,
+          // NO mostramos nada aquí → se activará solo en chat.html
+        });
+      });
+    </script>
+
+</head>
+<body>
+    <div class="container">
+        <h1>Hola, soy Zen</h1>
+        <p>Estoy aquí para escucharte y acompañarte. Comparte un poco sobre ti y empecemos juntos.</p>
+
+        <form id="zenForm">
+            <div class="form-group">
+                <label for="name">Nombre</label>
+                <input type="text" id="name" name="name" placeholder="Tu nombre" required>
+            </div>
+            <div class="form-group">
+                <label for="age">Edad</label>
+                <input type="number" id="age" name="age" placeholder="Tu edad" required min="0">
+            </div>
+            <div class="form-group">
+                <label for="feeling">¿Cómo te sientes hoy?</label>
+                <select id="feeling" name="feeling" required>
+                    <option value="">Selecciona tu estado...</option>
+                    <option value="happy">Feliz</option>
+                    <option value="sad">Triste</option>
+                    <option value="anxious">Ansioso</option>
+                    <option value="empty">Vacío</option>
+                </select>
+            </div>
+            <button type="submit">let's talk</button>
+        </form>
+    </div>
+
+    <script>
+    document.getElementById("zenForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById("name").value.trim();
+        const age = document.getElementById("age").value;
+        const feeling = document.getElementById("feeling").value;
+        
+        localStorage.setItem("zenContext", JSON.stringify({
+            name: name,
+            age: age,
+            feeling: feeling
+        }));
+
+        console.log("Datos guardados:", localStorage.getItem("zenContext"));
+
+        // Redirige al chat sin mostrar nada de OneSignal aquí
+        window.location.href = "chat.html";
+    });
+    </script>
+</body>
+</html>

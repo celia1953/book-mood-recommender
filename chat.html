@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zen Chat</title>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; color: #333; }
+    .chat-container { background-color: #ffffff; border-radius: 20px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08); width: 100%; max-width: 500px; height: 80vh; display: flex; flex-direction: column; overflow: hidden; }
+    .chat-header { padding: 20px; background-color: #ede7f6; border-bottom: 1px solid #e0e0e0; text-align: center; }
+    .chat-header h2 { margin: 0; color: #6a0572; font-size: 1.8em; }
+    .chat-header p { margin: 5px 0 0; color: #777; font-size: 0.9em; }
+    .chat-messages { flex-grow: 1; padding: 20px; overflow-y: auto; background-color: #fcfcff; display: flex; flex-direction: column; gap: 12px; }
+    .message-bubble { max-width: 80%; padding: 12px 18px; border-radius: 18px; line-height: 1.5; word-wrap: break-word; }
+    .message-bubble.zen { background-color: #ede7f6; color: #4a4a4a; align-self: flex-start; border-bottom-left-radius: 4px; }
+    .message-bubble.user { background-color: #a786d7; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .chat-input-area { padding: 15px 20px; border-top: 1px solid #e0e0e0; display: flex; gap: 10px; background-color: #ffffff; }
+    .chat-input-area input { flex-grow: 1; padding: 14px; border: 1px solid #e0e0e0; border-radius: 25px; font-size: 1em; background-color: #f9f9f9; }
+    .chat-input-area input:focus { border-color: #926fb1; box-shadow: 0 0 0 3px rgba(146, 111, 177, 0.2); outline: none; }
+    .chat-input-area button { background-color: #a786d7; color: white; border: none; border-radius: 25px; padding: 0 24px; font-weight: 600; cursor: pointer; }
+    .chat-input-area button:hover { background-color: #926fb1; }
+    .mood-selector { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+    .mood-selector select, .mood-selector button { padding: 10px; border-radius: 12px; }
+    .mood-selector button { background-color: #6a0572; align-self: flex-start; }
+  </style>
+
+  <!-- OneSignal SDK -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "c949ea47-5c1a-4791-a643-31a83001325b",
+        safari_web_id: "web.onesignal.auto.40f3c042-9d52-4eaf-84f1-85ef29137faa",
+        notifyButton: { enable: false }
+      });
+
+      // Mostrar el prompt SOLO la primera vez que el usuario envía un mensaje
+      const sendBtn = document.querySelector("button[onclick='sendMessage()']");
+      sendBtn.addEventListener("click", () => {
+        OneSignal.showSlidedownPrompt();
+      }, { once: true }); // se dispara solo una vez
+    });
+  </script>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">
+      <h2>Zen</h2>
+      <p>Your emotional support AI</p>
+    </div>
+    <div class="chat-messages" id="chatBox"></div>
+    <div class="chat-input-area">
+      <input type="text" id="messageInput" placeholder="Escribe tu mensaje..." autocomplete="off">
+      <button onclick="sendMessage()">Enviar</button>
+    </div>
+  </div>
+
+  <script>
+    const chatBox = document.getElementById("chatBox");
+    const messageInput = document.getElementById("messageInput");
+    const API_URL = "https://hk2n1vxfml.execute-api.us-east-2.amazonaws.com/prod/chat";
+
+    const userContext = JSON.parse(localStorage.getItem("zenContext")) || {};
+    let messages = JSON.parse(localStorage.getItem("zenChatHistory")) || [];
+
+    function renderMessages() {
+      chatBox.innerHTML = "";
+      messages.forEach(msg => {
+        const bubble = document.createElement("div");
+        bubble.className = `message-bubble ${msg.role}`;
+        bubble.textContent = msg.content;
+        chatBox.appendChild(bubble);
+      });
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    window.sendMessage = async function() {
+      const text = messageInput.value.trim();
+      if (!text) return;
+
+      messages.push({ role: "user", content: text });
+      renderMessages();
+      messageInput.value = "";
+
+      const typing = document.createElement("div");
+      typing.className = "message-bubble zen";
+      typing.textContent = "Zen está escribiendo...";
+      typing.id = "typing";
+      chatBox.appendChild(typing);
+
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages })
+        });
+
+        const data = await response.json();
+        const aiReply = data.response || "Lo siento, no pude responder en este momento.";
+
+        document.getElementById("typing")?.remove();
+        messages.push({ role: "zen", content: aiReply });
+        localStorage.setItem("zenChatHistory", JSON.stringify(messages));
+        renderMessages();
+
+      } catch (err) {
+        document.getElementById("typing")?.remove();
+        messages.push({ role: "zen", content: "Lo siento, estoy teniendo problemas para conectarme. Inténtalo de nuevo." });
+        renderMessages();
+      }
+    };
+
+    if (userContext.name && messages.length === 0) {
+      const intro = `Hola, me llamo ${userContext.name}, tengo ${userContext.age} años y me siento ${userContext.feeling || "así"}.`;
+      localStorage.setItem("zenChatHistory", JSON.stringify(messages));
+
+      setTimeout(() => {
+        const oldInputValue = messageInput.value;
+        messageInput.value = intro;
+        sendMessage();
+        messageInput.value = oldInputValue;
+      }, 300);
+    } else {
+      renderMessages();
+    }
+
+    messageInput.addEventListener("keypress", e => {
+      if (e.key === "Enter") sendMessage();
+    });
+  </script>
+</body>
+</html>
