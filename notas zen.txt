@@ -1,3 +1,0 @@
-https://hk2n1vxfml.execute-api.us-east-2.amazonaws.com/prod/chat     invoke url
-
-http://zen-landing-celia.s3-website.us-east-2.amazonaws.com  url bucket
